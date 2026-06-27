@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei',
+    'Noto Sans SC', sans-serif;
+  background-color: #f5f7fa;
+  color: #334155;
+  -webkit-font-smoothing: antialiased;
+}
+
+.resume-preview {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  box-shadow: 0 2px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .resume-preview,
+  .resume-preview * { visibility: visible; }
+  .resume-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: none;
+    width: 100%;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+input:focus, textarea:focus, select:focus {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* 列表标记由 renderRichText 用真实 DOM 绘制（见 src/utils/resumeConfig.tsx），
+   不再使用 ::before 伪元素 —— html2canvas 不绘制 ::marker，真实 DOM 可保证
+   导出 PDF 与预览区一致；改用 html2canvas-pro 后 flex/文字渲染也已对齐。 */

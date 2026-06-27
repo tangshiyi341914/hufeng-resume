@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Sensitive data — contains personal resumes, do not commit
+data.json
+
+# Personal photo — local avatar, do not commit
+public/photo.jpg
+
+# Project-specific
+git要求.md
+.claude/
+CLAUDE.md
+
+# Environment variables (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vite cache
+.vite/
