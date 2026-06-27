@@ -149,11 +149,9 @@ function SkillsSection({ data: items, C, accentColor, fc }: { data: Skill[]; C: 
   return (
     <div style={{ marginBottom: C.sectionSpacing }}>
       <SectionTitle color={accentColor} size={C.sectionTitleSize} fc={fc}>专业技能</SectionTitle>
-      <div className="flex flex-wrap gap-2">
-        {items.map((skill) => (
-          <span key={skill.id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 border border-gray-200" style={{ fontSize: C.bodySize, color: colorFor(fc.skillName) }}>
-            {skill.name}<span style={{ color: colorFor(fc.skillLevel) }}>{'●'.repeat(skill.level)}{'○'.repeat(5 - skill.level)}</span>
-          </span>
+      <div>
+        {items.map((skill, idx) => (
+          skill.description ? <div key={skill.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.skillDesc) }}>{renderRichText(skill.description)}</div> : null
         ))}
       </div>
     </div>

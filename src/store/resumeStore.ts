@@ -189,7 +189,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
     set((s) => ({
       currentResume: {
         ...s.currentResume,
-        data: { ...s.currentResume.data, skills: [...s.currentResume.data.skills, { id: uuidv4(), name: '', level: 3 }] },
+        data: { ...s.currentResume.data, skills: [...s.currentResume.data.skills, { id: uuidv4(), name: '', level: 3, description: '' }] },
       },
       dirty: true,
     })),
@@ -361,6 +361,11 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       ...resume,
       config: migrated,
       sectionOrder: resume.sectionOrder || [...defaultSectionOrder],
+      // 迁移技能数据 — 补充缺失的 description 字段
+      data: {
+        ...resume.data,
+        skills: (resume.data.skills || []).map((s) => ({ description: '', ...s })),
+      },
     };
     set({ currentResume: restored, dirty: false });
   },

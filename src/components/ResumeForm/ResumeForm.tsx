@@ -436,16 +436,9 @@ function SkillsForm() {
       {skills.length === 0 && <EmptyHint text="添加您的专业技能" />}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={skills.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-          {skills.map((skill) => (
-            <ListItemCard key={skill.id} id={skill.id} label={skill.name || '新技能'} onRemove={() => removeSkill(skill.id)}>
-              <div className="flex items-center gap-3">
-                <div className="flex-1"><Input value={skill.name} onChange={(e) => updateSkill(skill.id, { name: e.target.value })} placeholder="技能名称" /></div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {[1, 2, 3, 4, 5].map((lvl) => (
-                    <button key={lvl} onClick={() => updateSkill(skill.id, { level: lvl })} className={`w-6 h-6 rounded text-[11px] font-medium transition-all ${lvl <= skill.level ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>{lvl}</button>
-                  ))}
-                </div>
-              </div>
+          {skills.map((skill, i) => (
+            <ListItemCard key={skill.id} id={skill.id} label={`技能 #${i + 1}`} onRemove={() => removeSkill(skill.id)}>
+              <Field label="技能描述" span><BoldTextarea value={skill.description} onChange={(e) => updateSkill(skill.id, { description: e.target.value })} placeholder="描述您对该技能的掌握程度和应用场景..." rows={4} /></Field>
             </ListItemCard>
           ))}
         </SortableContext>

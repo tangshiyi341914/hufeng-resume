@@ -111,9 +111,9 @@ function MinimalSkills({ items, C, accentColor, fc }: { items: Skill[]; C: any; 
   return (
     <div style={{ marginBottom: C.sectionSpacing }}>
       <ST color={accentColor} size={C.sectionTitleSize} fc={fc}>技能</ST>
-      <div className="flex flex-wrap gap-3">
-        {items.map((skill) => (
-          <span key={skill.id} style={{ fontSize: C.bodySize, color: colorFor(fc.skillName) }}>{skill.name}<span className="ml-1.5" style={{ fontSize: `calc(${C.bodySize} - 2px)`, color: colorFor(fc.skillLevel) }}>{'■'.repeat(skill.level)}{'□'.repeat(5 - skill.level)}</span></span>
+      <div>
+        {items.map((skill, idx) => (
+          skill.description ? <div key={skill.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.skillDesc) }}>{renderRichText(skill.description)}</div> : null
         ))}
       </div>
     </div>

@@ -1,6 +1,13 @@
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 
+/** 渲染缩放倍数（3x ≈ 300dpi 级别，打印足够清晰） */
+const RENDER_SCALE = 3;
+/** JPEG 压缩质量 0–1（白底黑字 0.80 肉眼几乎无损，体积大幅缩减） */
+const JPEG_QUALITY = 0.80;
+/** 导出图片格式 */
+const IMG_FORMAT: 'JPEG' | 'PNG' = 'JPEG';
+
 export async function exportToPDF(elementId: string, filename = '简历.pdf') {
   const root = document.getElementById(elementId);
   if (!root) {
@@ -38,7 +45,7 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
     const firstPage = pages[0];
 
     const fullCanvas = await html2canvas(firstPage, {
-      scale: 3,
+      scale: RENDER_SCALE,
       useCORS: true,
       logging: false,
       scrollX: 0,
@@ -58,7 +65,7 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
     });
 
     // 实际渲染高度 vs 测量高度 —— 按比例校正分页区间
-    const actualTotalHeight = fullCanvas.height / 3;
+    const actualTotalHeight = fullCanvas.height / RENDER_SCALE;
     const ratio = measuredTotalHeight > 0
       ? actualTotalHeight / measuredTotalHeight
       : 1;
@@ -68,7 +75,6 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
       end: r.end * ratio,
     }));
 
-    const scale = 3;
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgWidth = 210;
     const pageHeightMm = 297;
@@ -76,8 +82,8 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
     for (let i = 0; i < adjustedRanges.length; i++) {
       const { start, end } = adjustedRanges[i];
 
-      const srcY = Math.round(start * scale);
-      const srcEnd = Math.min(Math.round(end * scale), fullCanvas.height);
+      const srcY = Math.round(start * RENDER_SCALE);
+      const srcEnd = Math.min(Math.round(end * RENDER_SCALE), fullCanvas.height);
       const srcH = Math.max(1, srcEnd - srcY);
 
       const slice = document.createElement('canvas');
@@ -92,11 +98,12 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
         fullCanvas.width, srcH
       );
 
-      const imgData = slice.toDataURL('image/png');
+      const mimeType = IMG_FORMAT === 'PNG' ? 'image/png' : 'image/jpeg';
+      const imgData = slice.toDataURL(mimeType, JPEG_QUALITY);
       const imgHeight = (srcH * imgWidth) / fullCanvas.width;
 
       if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pageHeightMm));
+      pdf.addImage(imgData, IMG_FORMAT, 0, 0, imgWidth, Math.min(imgHeight, pageHeightMm));
     }
 
     pdf.save(filename);
@@ -108,7 +115,7 @@ export async function exportToPDF(elementId: string, filename = '简历.pdf') {
 
 async function exportSinglePageFallback(element: HTMLElement, filename: string) {
   const canvas = await html2canvas(element, {
-    scale: 3,
+    scale: RENDER_SCALE,
     useCORS: true,
     logging: false,
     scrollX: 0,
@@ -116,7 +123,8 @@ async function exportSinglePageFallback(element: HTMLElement, filename: string) 
     onclone: (_doc, clonedEl) => fixStickyAll(clonedEl),
     backgroundColor: '#ffffff',
   });
-  const imgData = canvas.toDataURL('image/png');
+  const mimeType = IMG_FORMAT === 'PNG' ? 'image/png' : 'image/jpeg';
+  const imgData = canvas.toDataURL(mimeType, JPEG_QUALITY);
   const imgWidth = 210;
   const pageHeight = 297;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -125,13 +133,13 @@ async function exportSinglePageFallback(element: HTMLElement, filename: string) 
   let heightLeft = imgHeight;
   let position = 0;
 
-  pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+  pdf.addImage(imgData, IMG_FORMAT, 0, position, imgWidth, imgHeight);
   heightLeft -= pageHeight;
 
   while (heightLeft > 0) {
     position -= pageHeight;
     pdf.addPage();
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    pdf.addImage(imgData, IMG_FORMAT, 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
   }
 

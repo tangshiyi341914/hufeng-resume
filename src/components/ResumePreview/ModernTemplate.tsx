@@ -151,10 +151,7 @@ function SideSkills({ skills, C, accentColor, fc }: { skills: Skill[]; C: any; a
     <div style={{ marginBottom: C.sectionSpacing }}>
       <SidebarTitle accentColor={accentColor}>专业技能</SidebarTitle>
       {skills.map((skill, idx) => (
-        <div key={skill.id} data-pagination-block style={{ marginBottom: idx === skills.length - 1 ? 0 : C.itemSpacing, ...(idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: C.itemSpacing } : {}) }}>
-          <p className="mb-1.5" style={{ fontSize: C.bodySize, color: colorFor(fc.skillName) }}>{skill.name}</p>
-          <div className="w-full h-1 bg-white/10"><div className="h-1" style={{ width: `${(skill.level / 5) * 100}%`, backgroundColor: accentColor }} /></div>
-        </div>
+        skill.description ? <div key={skill.id} data-pagination-block style={{ marginBottom: idx === skills.length - 1 ? 0 : C.itemSpacing, ...(idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: C.itemSpacing } : {}), fontSize: C.bodySize, color: colorFor(fc.skillDesc) }}>{renderRichText(skill.description)}</div> : null
       ))}
     </div>
   );

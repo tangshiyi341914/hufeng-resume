@@ -48,6 +48,7 @@ export interface Skill {
   id: string;
   name: string;
   level: number;
+  description: string;
 }
 
 export interface Project {
@@ -132,6 +133,7 @@ export interface FieldColors {
   // 技能
   skillName: TextColorLevel;
   skillLevel: TextColorLevel;
+  skillDesc: TextColorLevel;
   // 项目经历
   projName: TextColorLevel;
   projLink: TextColorLevel;
@@ -167,6 +169,7 @@ export const defaultFieldColors: FieldColors = {
   eduDate: 'gray-800',
   skillName: 'gray-700',
   skillLevel: 'gray-300',
+  skillDesc: 'gray-600',
   projName: 'gray-800',
   projLink: 'gray-400',
   projTech: 'gray-400',
