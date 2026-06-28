@@ -1,9 +1,9 @@
 import React from 'react';
-import { ResumeData, ResumeConfig, WorkExperience, Internship, Education, Skill, Project, Language, Certification } from '../../types/resume';
+import { ResumeData, ResumeConfig, WorkExperience, Internship, Education, Skill, Research, Project, Language, Certification } from '../../types/resume';
 import { applyConfig, renderRichText, colorFor } from '../../utils/resumeConfig';
 import { Mail, Phone, MapPin, Globe } from 'lucide-react';
 
-type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'projects' | 'languages' | 'certifications';
+type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'research' | 'projects' | 'languages' | 'certifications';
 
 interface Props { data: ResumeData; config: ResumeConfig; sectionOrder: SectionKey[]; }
 
@@ -60,6 +60,7 @@ function renderMinimalSection(key: SectionKey, data: ResumeData, C: any, accentC
     case 'internships': return data.internships.length > 0 ? <MinimalList title="实习" items={data.internships} C={C} accentColor={accentColor} fc={fc} isWork={false} /> : null;
     case 'education': return data.education.length > 0 ? <MinimalEdu items={data.education} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'skills': return data.skills.length > 0 ? <MinimalSkills items={data.skills} C={C} accentColor={accentColor} fc={fc} /> : null;
+    case 'research': return data.research.length > 0 ? <MinimalResearch items={data.research} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'projects': return data.projects.length > 0 ? <MinimalProjects items={data.projects} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'languages': return data.languages.length > 0 ? <MinimalLangCert languages={data.languages} certifications={[]} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'certifications': return data.certifications.length > 0 && data.languages.length === 0 ? <MinimalLangCert languages={[]} certifications={data.certifications} C={C} accentColor={accentColor} fc={fc} /> : null;
@@ -114,6 +115,19 @@ function MinimalSkills({ items, C, accentColor, fc }: { items: Skill[]; C: any; 
       <div>
         {items.map((skill, idx) => (
           skill.description ? <div key={skill.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.skillDesc) }}>{renderRichText(skill.description)}</div> : null
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MinimalResearch({ items, C, accentColor, fc }: { items: Research[]; C: any; accentColor: string; fc: any }) {
+  return (
+    <div style={{ marginBottom: C.sectionSpacing }}>
+      <ST color={accentColor} size={C.sectionTitleSize} fc={fc}>科研</ST>
+      <div>
+        {items.map((r, idx) => (
+          r.description ? <div key={r.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.researchDesc) }}>{renderRichText(r.description)}</div> : null
         ))}
       </div>
     </div>

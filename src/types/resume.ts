@@ -51,6 +51,11 @@ export interface Skill {
   description: string;
 }
 
+export interface Research {
+  id: string;
+  description: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -78,6 +83,7 @@ export interface ResumeData {
   internships: Internship[];
   education: Education[];
   skills: Skill[];
+  research: Research[];
   projects: Project[];
   languages: Language[];
   certifications: Certification[];
@@ -134,6 +140,8 @@ export interface FieldColors {
   skillName: TextColorLevel;
   skillLevel: TextColorLevel;
   skillDesc: TextColorLevel;
+  // 科研成果
+  researchDesc: TextColorLevel;
   // 项目经历
   projName: TextColorLevel;
   projLink: TextColorLevel;
@@ -170,6 +178,7 @@ export const defaultFieldColors: FieldColors = {
   skillName: 'gray-700',
   skillLevel: 'gray-300',
   skillDesc: 'gray-600',
+  researchDesc: 'gray-600',
   projName: 'gray-800',
   projLink: 'gray-400',
   projTech: 'gray-400',
@@ -196,9 +205,9 @@ export interface ResumeConfig {
   fieldColors: FieldColors; // 各字段文字颜色
 }
 
-export type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'projects' | 'languages' | 'certifications';
+export type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'research' | 'projects' | 'languages' | 'certifications';
 
-export const defaultSectionOrder: SectionKey[] = ['education', 'internships', 'workExperience', 'projects', 'skills', 'languages', 'certifications'];
+export const defaultSectionOrder: SectionKey[] = ['education', 'internships', 'workExperience', 'projects', 'skills', 'research', 'languages', 'certifications'];
 
 export interface Resume {
   id?: string;
@@ -241,6 +250,7 @@ export const defaultResumeData: ResumeData = {
   internships: [],
   education: [],
   skills: [],
+  research: [],
   projects: [],
   languages: [],
   certifications: [],

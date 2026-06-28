@@ -32,6 +32,10 @@ interface ResumeStore {
   addSkill: () => void;
   updateSkill: (id: string, data: Partial<ResumeData['skills'][0]>) => void;
   removeSkill: (id: string) => void;
+  // 科研成果
+  addResearch: () => void;
+  updateResearch: (id: string, data: Partial<ResumeData['research'][0]>) => void;
+  removeResearch: (id: string) => void;
   // 项目
   addProject: () => void;
   updateProject: (id: string, data: Partial<ResumeData['projects'][0]>) => void;
@@ -50,6 +54,7 @@ interface ResumeStore {
   reorderInternships: (from: number, to: number) => void;
   reorderEducation: (from: number, to: number) => void;
   reorderSkills: (from: number, to: number) => void;
+  reorderResearch: (from: number, to: number) => void;
   reorderProjects: (from: number, to: number) => void;
   reorderLanguages: (from: number, to: number) => void;
   reorderCertifications: (from: number, to: number) => void;
@@ -210,6 +215,31 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       dirty: true,
     })),
 
+  addResearch: () =>
+    set((s) => ({
+      currentResume: {
+        ...s.currentResume,
+        data: { ...s.currentResume.data, research: [...s.currentResume.data.research, { id: uuidv4(), description: '' }] },
+      },
+      dirty: true,
+    })),
+  updateResearch: (id, d) =>
+    set((s) => ({
+      currentResume: {
+        ...s.currentResume,
+        data: { ...s.currentResume.data, research: s.currentResume.data.research.map((r) => r.id === id ? { ...r, ...d } : r) },
+      },
+      dirty: true,
+    })),
+  removeResearch: (id) =>
+    set((s) => ({
+      currentResume: {
+        ...s.currentResume,
+        data: { ...s.currentResume.data, research: s.currentResume.data.research.filter((r) => r.id !== id) },
+      },
+      dirty: true,
+    })),
+
   addProject: () =>
     set((s) => ({
       currentResume: {
@@ -314,6 +344,13 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       arr.splice(to, 0, item);
       return { currentResume: { ...s.currentResume, data: { ...s.currentResume.data, skills: arr } }, dirty: true };
     }),
+  reorderResearch: (from, to) =>
+    set((s) => {
+      const arr = [...s.currentResume.data.research];
+      const [item] = arr.splice(from, 1);
+      arr.splice(to, 0, item);
+      return { currentResume: { ...s.currentResume, data: { ...s.currentResume.data, research: arr } }, dirty: true };
+    }),
   reorderProjects: (from, to) =>
     set((s) => {
       const arr = [...s.currentResume.data.projects];
@@ -357,14 +394,19 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
     };
     // 清理旧字段 pageMargin（避免类型不匹配）
     delete (migrated as any).pageMargin;
+    // 确保 sectionOrder 包含所有最新模块（旧数据可能缺少新增模块）
+    const existingOrder = resume.sectionOrder || [];
+    const mergedOrder = [...new Set([...existingOrder, ...defaultSectionOrder])];
+
     const restored = {
       ...resume,
       config: migrated,
-      sectionOrder: resume.sectionOrder || [...defaultSectionOrder],
-      // 迁移技能数据 — 补充缺失的 description 字段
+      sectionOrder: mergedOrder,
+      // 迁移旧数据 — 补充缺失字段
       data: {
         ...resume.data,
         skills: (resume.data.skills || []).map((s) => ({ description: '', ...s })),
+        research: (resume.data.research || []).map((r) => ({ description: '', ...r })),
       },
     };
     set({ currentResume: restored, dirty: false });

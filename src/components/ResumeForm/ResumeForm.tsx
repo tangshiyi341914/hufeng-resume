@@ -447,6 +447,37 @@ function SkillsForm() {
   );
 }
 
+// ==================== 科研成果 ====================
+function ResearchForm() {
+  const { currentResume, addResearch, updateResearch, removeResearch, reorderResearch } = useResumeStore();
+  const { research } = currentResume.data;
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (over && active.id !== over.id) {
+      const from = research.findIndex((x) => x.id === active.id);
+      const to = research.findIndex((x) => x.id === over.id);
+      if (from !== -1 && to !== -1) reorderResearch(from, to);
+    }
+  };
+
+  return (
+    <SectionBlock id="research" title="科研成果" count={research.length} onAdd={addResearch}>
+      {research.length === 0 && <EmptyHint text="添加您的科研成果" />}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={research.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+          {research.map((r, i) => (
+            <ListItemCard key={r.id} id={r.id} label={`科研成果 #${i + 1}`} onRemove={() => removeResearch(r.id)}>
+              <Field label="成果描述" span><BoldTextarea value={r.description} onChange={(e) => updateResearch(r.id, { description: e.target.value })} placeholder="描述您的研究内容、发表论文、专利或参与项目..." rows={4} /></Field>
+            </ListItemCard>
+          ))}
+        </SortableContext>
+      </DndContext>
+    </SectionBlock>
+  );
+}
+
 // ==================== 项目经历 ====================
 function ProjectsForm() {
   const { currentResume, addProject, updateProject, removeProject, reorderProjects } = useResumeStore();
@@ -560,13 +591,14 @@ function EmptyHint({ text }: { text: string }) {
 }
 
 // ==================== 模块排序（拖拽调整模块顺序） ====================
-type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'projects' | 'languages' | 'certifications';
+type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'research' | 'projects' | 'languages' | 'certifications';
 
 const sectionMap: Record<SectionKey, { component: React.FC; title: string }> = {
   workExperience: { component: WorkExperienceForm, title: '工作经历' },
   internships: { component: InternshipForm, title: '实习经历' },
   education: { component: EducationForm, title: '教育背景' },
   skills: { component: SkillsForm, title: '专业技能' },
+  research: { component: ResearchForm, title: '科研成果' },
   projects: { component: ProjectsForm, title: '项目经历' },
   languages: { component: LanguagesForm, title: '语言能力' },
   certifications: { component: CertificationsForm, title: '证书与资质' },

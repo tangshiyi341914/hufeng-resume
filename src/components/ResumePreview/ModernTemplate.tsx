@@ -1,9 +1,9 @@
 import React from 'react';
-import { ResumeData, ResumeConfig, Skill, Language, Certification, WorkExperience, Internship, Education, Project } from '../../types/resume';
+import { ResumeData, ResumeConfig, Skill, Research, Language, Certification, WorkExperience, Internship, Education, Project } from '../../types/resume';
 import { applyConfig, renderRichText, colorFor } from '../../utils/resumeConfig';
 import { Mail, Phone, MapPin, Globe } from 'lucide-react';
 
-type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'projects' | 'languages' | 'certifications';
+type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'research' | 'projects' | 'languages' | 'certifications';
 
 interface Props { data: ResumeData; config: ResumeConfig; sectionOrder: SectionKey[]; }
 
@@ -80,6 +80,7 @@ function renderMainSection(key: SectionKey, data: ResumeData, C: any, accentColo
     case 'workExperience': return data.workExperience.length > 0 ? <MainExpSection items={data.workExperience} C={C} accentColor={accentColor} fc={fc} title="工作经历" /> : null;
     case 'internships': return data.internships.length > 0 ? <MainExpSection items={data.internships} C={C} accentColor={accentColor} fc={fc} title="实习经历" /> : null;
     case 'education': return data.education.length > 0 ? <MainEduSection items={data.education} C={C} accentColor={accentColor} fc={fc} /> : null;
+    case 'research': return data.research.length > 0 ? <MainResearchSection items={data.research} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'projects': return data.projects.length > 0 ? <MainProjSection items={data.projects} C={C} accentColor={accentColor} fc={fc} /> : null;
     default: return null;
   }
@@ -141,6 +142,17 @@ function MainProjSection({ items, C, accentColor, fc }: { items: Project[]; C: a
           </div>
           {proj.description && <div style={{ color: colorFor(fc.projDesc) }}>{renderRichText(proj.description)}</div>}
         </div>
+      ))}
+    </div>
+  );
+}
+
+function MainResearchSection({ items, C, accentColor, fc }: { items: Research[]; C: any; accentColor: string; fc: any }) {
+  return (
+    <div style={{ marginBottom: C.sectionSpacing }}>
+      <MainTitle color={accentColor} size={C.sectionTitleSize} fc={fc}>科研成果</MainTitle>
+      {items.map((r, idx) => (
+        r.description ? <div key={r.id} data-pagination-block style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, ...(idx > 0 ? { borderTop: '1px solid #e5e7eb', paddingTop: C.itemSpacing } : {}), fontSize: C.bodySize, color: colorFor(fc.researchDesc) }}>{renderRichText(r.description)}</div> : null
       ))}
     </div>
   );

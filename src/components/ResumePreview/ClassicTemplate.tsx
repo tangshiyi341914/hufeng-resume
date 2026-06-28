@@ -1,9 +1,9 @@
 import React from 'react';
-import { ResumeData, ResumeConfig, Skill, Language, Certification, WorkExperience, Internship, Education, Project } from '../../types/resume';
+import { ResumeData, ResumeConfig, Skill, Research, Language, Certification, WorkExperience, Internship, Education, Project } from '../../types/resume';
 import { applyConfig, renderRichText, colorFor } from '../../utils/resumeConfig';
 import { Mail, Phone, MapPin, Globe } from 'lucide-react';
 
-type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'projects' | 'languages' | 'certifications';
+type SectionKey = 'workExperience' | 'internships' | 'education' | 'skills' | 'research' | 'projects' | 'languages' | 'certifications';
 
 interface Props {
   data: ResumeData;
@@ -74,6 +74,8 @@ function renderSection(key: SectionKey, data: ResumeData, C: any, accentColor: s
       return data.education.length > 0 ? <EducationSection data={data.education} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'skills':
       return data.skills.length > 0 ? <SkillsSection data={data.skills} C={C} accentColor={accentColor} fc={fc} /> : null;
+    case 'research':
+      return data.research.length > 0 ? <ResearchSection data={data.research} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'projects':
       return data.projects.length > 0 ? <ProjectsSection data={data.projects} C={C} accentColor={accentColor} fc={fc} /> : null;
     case 'languages':
@@ -152,6 +154,19 @@ function SkillsSection({ data: items, C, accentColor, fc }: { data: Skill[]; C: 
       <div>
         {items.map((skill, idx) => (
           skill.description ? <div key={skill.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.skillDesc) }}>{renderRichText(skill.description)}</div> : null
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ResearchSection({ data: items, C, accentColor, fc }: { data: Research[]; C: any; accentColor: string; fc: any }) {
+  return (
+    <div style={{ marginBottom: C.sectionSpacing }}>
+      <SectionTitle color={accentColor} size={C.sectionTitleSize} fc={fc}>科研成果</SectionTitle>
+      <div>
+        {items.map((r, idx) => (
+          r.description ? <div key={r.id} style={{ marginBottom: idx === items.length - 1 ? 0 : C.itemSpacing, fontSize: C.bodySize, color: colorFor(fc.researchDesc) }}>{renderRichText(r.description)}</div> : null
         ))}
       </div>
     </div>

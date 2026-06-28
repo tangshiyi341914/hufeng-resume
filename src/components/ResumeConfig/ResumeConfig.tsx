@@ -23,6 +23,9 @@ const sectionColorGroups: Record<SectionKey, { title: string; fields: { key: key
   skills: { title: '专业技能', fields: [
     { key: 'skillName', label: '技能名称' }, { key: 'skillLevel', label: '等级指示' }, { key: 'skillDesc', label: '技能描述' },
   ]},
+  research: { title: '科研成果', fields: [
+    { key: 'researchDesc', label: '成果描述' },
+  ]},
   projects: { title: '项目经历', fields: [
     { key: 'projName', label: '项目名称' }, { key: 'projLink', label: '项目链接' },
     { key: 'projTech', label: '技术栈' }, { key: 'projDesc', label: '描述' },
