@@ -1,166 +1,144 @@
-import html2canvas from 'html2canvas-pro';
-import jsPDF from 'jspdf';
+/**
+ * 导出 PDF：收集简历 HTML + 所有 CSS 样式，发送到服务端用 Puppeteer (headless Chrome)
+ * 渲染并生成真正的 PDF（文字可选中/复制/搜索），然后触发浏览器下载。
+ */
 
-/** 渲染缩放倍数（3x ≈ 300dpi 级别，打印足够清晰） */
-const RENDER_SCALE = 3;
-/** JPEG 压缩质量 0–1（白底黑字 0.80 肉眼几乎无损，体积大幅缩减） */
-const JPEG_QUALITY = 0.80;
-/** 导出图片格式 */
-const IMG_FORMAT: 'JPEG' | 'PNG' = 'JPEG';
+/**
+ * 从 DOM 中提取完整简历内容 HTML 和渲染宽度。
+ * PaginatedPreview 的每个 [data-pdf-page] 内层 div 包含完整的模板渲染结果，
+ * 取第一个即可获得全部内容。
+ */
+function collectResumeHTML(elementId: string): { html: string; width: number } {
+  const root = document.getElementById(elementId);
+  if (!root) throw new Error('未找到简历预览元素');
+
+  // 优先从分页容器获取完整内容
+  const pageEl = root.querySelector<HTMLElement>('[data-pdf-page]');
+  if (pageEl?.firstElementChild) {
+    const inner = pageEl.firstElementChild as HTMLElement;
+    const width = parseInt(inner.style.width) || 800;
+    const html = inner.innerHTML;
+    if (html.trim()) return { html, width };
+  }
+
+  // 回退：使用测量容器 [data-pdf-source]
+  const sourceEl = root.querySelector<HTMLElement>('[data-pdf-source]');
+  if (sourceEl) {
+    const width = parseInt(sourceEl.style.width) || 800;
+    const html = sourceEl.innerHTML;
+    if (html.trim()) return { html, width };
+  }
+
+  throw new Error('简历内容为空，请先填写简历信息');
+}
+
+/**
+ * 收集页面中所有 CSS 样式。
+ * 包括内联 <style> 标签（Vite dev 模式下的 Tailwind）和外链样式表。
+ */
+async function collectAllStyles(): Promise<string> {
+  const parts: string[] = [];
+
+  // 1. 内联 <style> 标签
+  document.querySelectorAll('style').forEach((el) => {
+    const text = el.textContent?.trim();
+    if (text) parts.push(text);
+  });
+
+  // 2. 外链样式表（同源 fetch）
+  const links = document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]');
+  for (const link of links) {
+    try {
+      const res = await fetch(link.href);
+      if (res.ok) {
+        const css = await res.text();
+        if (css.trim()) parts.push(css);
+      }
+    } catch {
+      console.warn('无法获取样式表:', link.href);
+    }
+  }
+
+  return parts.join('\n\n');
+}
 
 export async function exportToPDF(elementId: string, filename = '简历.pdf') {
-  const root = document.getElementById(elementId);
-  if (!root) {
-    alert('未找到简历预览元素');
+  let html: string;
+  let width: number;
+
+  try {
+    const result = collectResumeHTML(elementId);
+    html = result.html;
+    width = result.width;
+  } catch (err: any) {
+    alert(err.message || '无法获取简历内容');
     return;
   }
 
+  // 显示进度提示
+  const toast = document.createElement('div');
+  toast.className =
+    'fixed top-4 left-1/2 -translate-x-1/2 z-[99999] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl text-sm font-medium flex items-center gap-2';
+  toast.innerHTML = `
+    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    正在生成 PDF...
+  `;
+  document.body.appendChild(toast);
+
   try {
-    await document.fonts.ready;
+    const styles = await collectAllStyles();
 
-    const pages = Array.from(
-      root.querySelectorAll<HTMLElement>('[data-pdf-page]')
-    );
-
-    if (pages.length === 0) {
-      await exportSinglePageFallback(root, filename);
-      return;
-    }
-
-    const pageRanges = pages.map((el) => ({
-      start: parseFloat(el.dataset.pageStart || '0'),
-      end: parseFloat(el.dataset.pageEnd || '0'),
-    }));
-
-    const measuredTotalHeight = Math.max(...pageRanges.map((r) => r.end));
-    if (!measuredTotalHeight) {
-      await exportSinglePageFallback(root, filename);
-      return;
-    }
-
-    // 使用第一个可见分页容器（屏上渲染），在 onclone 中将内部 absolute
-    // 子元素改为 relative（normal flow），让容器 height:auto 自然撑开到
-    // 真实内容高度。然后用实际渲染高度和测量高度的比例，校正所有分页区间，
-    // 消除测量源与渲染源之间的任何偏差。
-    const firstPage = pages[0];
-
-    const fullCanvas = await html2canvas(firstPage, {
-      scale: RENDER_SCALE,
-      useCORS: true,
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      onclone: (_doc, clonedEl) => {
-        fixStickyAll(clonedEl);
-        clonedEl.style.overflow = 'visible';
-        clonedEl.style.height = 'auto';
-        clonedEl.style.boxShadow = 'none';
-        const inner = clonedEl.firstElementChild as HTMLElement | null;
-        if (inner) {
-          inner.style.position = 'relative';
-          inner.style.top = 'auto';
-        }
-      },
-      backgroundColor: '#ffffff',
+    const response = await fetch('/api/export-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        styles,
+        width,
+        baseUrl: window.location.origin,
+      }),
     });
 
-    // 实际渲染高度 vs 测量高度 —— 按比例校正分页区间
-    const actualTotalHeight = fullCanvas.height / RENDER_SCALE;
-    const ratio = measuredTotalHeight > 0
-      ? actualTotalHeight / measuredTotalHeight
-      : 1;
-
-    const adjustedRanges = pageRanges.map((r) => ({
-      start: r.start * ratio,
-      end: r.end * ratio,
-    }));
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const pageHeightMm = 297;
-
-    for (let i = 0; i < adjustedRanges.length; i++) {
-      const { start, end } = adjustedRanges[i];
-
-      const srcY = Math.round(start * RENDER_SCALE);
-      const srcEnd = Math.min(Math.round(end * RENDER_SCALE), fullCanvas.height);
-      const srcH = Math.max(1, srcEnd - srcY);
-
-      const slice = document.createElement('canvas');
-      slice.width = fullCanvas.width;
-      slice.height = srcH;
-      const ctx = slice.getContext('2d')!;
-      ctx.drawImage(
-        fullCanvas,
-        0, srcY,
-        fullCanvas.width, srcH,
-        0, 0,
-        fullCanvas.width, srcH
-      );
-
-      const mimeType = IMG_FORMAT === 'PNG' ? 'image/png' : 'image/jpeg';
-      const imgData = slice.toDataURL(mimeType, JPEG_QUALITY);
-      const imgHeight = (srcH * imgWidth) / fullCanvas.width;
-
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, IMG_FORMAT, 0, 0, imgWidth, Math.min(imgHeight, pageHeightMm));
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: '未知错误' }));
+      throw new Error(err.error || `HTTP ${response.status}`);
     }
 
-    pdf.save(filename);
-  } catch (error) {
-    console.error('导出PDF失败:', error);
-    alert('导出PDF失败，请重试');
-  }
-}
+    // 下载 PDF
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-async function exportSinglePageFallback(element: HTMLElement, filename: string) {
-  const canvas = await html2canvas(element, {
-    scale: RENDER_SCALE,
-    useCORS: true,
-    logging: false,
-    scrollX: 0,
-    scrollY: 0,
-    onclone: (_doc, clonedEl) => fixStickyAll(clonedEl),
-    backgroundColor: '#ffffff',
-  });
-  const mimeType = IMG_FORMAT === 'PNG' ? 'image/png' : 'image/jpeg';
-  const imgData = canvas.toDataURL(mimeType, JPEG_QUALITY);
-  const imgWidth = 210;
-  const pageHeight = 297;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  let heightLeft = imgHeight;
-  let position = 0;
-
-  pdf.addImage(imgData, IMG_FORMAT, 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
-
-  while (heightLeft > 0) {
-    position -= pageHeight;
-    pdf.addPage();
-    pdf.addImage(imgData, IMG_FORMAT, 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-  }
-
-  pdf.save(filename);
-}
-
-function fixStickyAll(target: HTMLElement) {
-  const stickyEls = target.querySelectorAll('.sticky');
-  stickyEls.forEach((el) => {
-    const htmlEl = el as HTMLElement;
-    htmlEl.style.position = 'static';
-    htmlEl.style.top = 'auto';
-    htmlEl.classList.remove('sticky', 'top-4');
-  });
-  let ancestor = target.parentElement;
-  while (ancestor) {
-    if (ancestor.classList.contains('sticky')) {
-      ancestor.style.position = 'static';
-      ancestor.style.top = 'auto';
-      ancestor.classList.remove('sticky', 'top-4');
-    }
-    ancestor = ancestor.parentElement;
+    toast.innerHTML = `
+      <svg class="h-4 w-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      PDF 导出成功
+    `;
+    toast.className = toast.className.replace('bg-gray-900', 'bg-emerald-700');
+  } catch (err: any) {
+    console.error('导出PDF失败:', err);
+    toast.innerHTML = `
+      <svg class="h-4 w-4 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      导出失败：${err.message || '请重试'}
+    `;
+    toast.className = toast.className.replace('bg-gray-900', 'bg-red-800');
+  } finally {
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
   }
 }
