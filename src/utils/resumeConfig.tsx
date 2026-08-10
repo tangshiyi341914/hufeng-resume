@@ -23,7 +23,11 @@ export function colorFor(level: TextColorLevel): string {
 // 解析标记：**加粗**、无序列表(- 开头)、有序列表(1. 开头)、保留换行
 export function renderRichText(text: string): React.ReactNode {
   if (!text) return null;
-  const lines = text.split('\n');
+  // 规范化换行：连续换行合并为单个、去掉首尾换行。
+  // 输入法回车、粘贴等场景可能在值里混入多余 \n，导致预览/PDF 出现空行（"换一行却变两行"）。
+  // 简历场景下段内空行无意义，统一折叠为单换行。
+  const normalized = text.replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '');
+  const lines = normalized.split('\n');
 
   // 检测是否存在列表行
   const hasList = lines.some((l) => /^[-*]\s/.test(l) || /^\d+[.\)]\s/.test(l));
@@ -39,6 +43,9 @@ export function renderRichText(text: string): React.ReactNode {
 
   // 有列表：将连续列表项分组渲染为 <ul> 或 <ol>
   const result: React.ReactNode[] = [];
+  // 标记上一个渲染块是否为列表。<ul>/<ol> 是块级元素，自身会换行，
+  // 若在其后再插 <br> 会多出一行空隙（预览/PDF 里表现为"多一行空白"）。
+  let lastWasList = false;
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
@@ -77,6 +84,7 @@ export function renderRichText(text: string): React.ReactNode {
           ))}
         </ul>
       );
+      lastWasList = true;
     } else if (olMatch) {
       // 收集连续的有序列表项
       const items: string[] = [olMatch[2]];
@@ -103,14 +111,17 @@ export function renderRichText(text: string): React.ReactNode {
           ))}
         </ol>
       );
+      lastWasList = true;
     } else {
       // 普通行
       result.push(
         <React.Fragment key={result.length}>
-          {result.length > 0 && <br />}
+          {/* 前一块是列表时不再加 <br>（块级元素已自带换行） */}
+          {result.length > 0 && !lastWasList && <br />}
           {renderInline(line)}
         </React.Fragment>
       );
+      lastWasList = false;
       i++;
     }
   }
@@ -120,7 +131,10 @@ export function renderRichText(text: string): React.ReactNode {
 // 内联渲染 **加粗**
 function renderInline(text: string): React.ReactNode {
   if (!text) return null;
-  return text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+  // 连续空格转不间断空格（&nbsp;），避免 HTML 默认折叠多个空格为单个，
+  // 使预览/PDF 与编辑框中的空格保持一致。
+  const withNbsp = text.replace(/ {2,}/g, (m) => ' '.repeat(m.length));
+  return withNbsp.split(/(\*\*.*?\*\*)/g).map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
     }

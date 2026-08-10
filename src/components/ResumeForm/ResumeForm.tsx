@@ -112,6 +112,36 @@ function BoldTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
     setter?.call(ta, value);
   };
 
+  // 输入法组合态下的回车（keyCode 229 / isComposing）：
+  // Chromium 在提交组合内容的同时还会插入一个换行，导致"按一次回车却换两行、多一行空白"。
+  // preventDefault 只阻止多余换行，组合内容仍会正常上屏（已验证）。
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const native = e.nativeEvent;
+    if (native.isComposing || native.keyCode === 229) {
+      e.preventDefault();
+    }
+  };
+
+  // 粘贴规范化：合并连续换行为单换行、去掉首尾换行、\r\n → \n。
+  // 从 AI 工具复制的 Markdown 常带空行（列表组间 \n\n）和结尾换行，
+  // 若原样保留会导致预览区"按一次回车却换两行"。
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const pasted = e.clipboardData
+      .getData('text')
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+      .replace(/^\n+|\n+$/g, '');
+    const newText = ta.value.slice(0, start) + pasted + ta.value.slice(end);
+    setNativeValue(ta, newText);
+    ta.setSelectionRange(start + pasted.length, start + pasted.length);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
   const insertBold = () => modifyTextarea((ta) => {
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
@@ -183,7 +213,7 @@ function BoldTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
 
   return (
     <div className="relative">
-      <textarea ref={textareaRef} {...props} className="w-full px-3 py-2 pb-8 border border-gray-200 rounded-md text-sm text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/50 transition-shadow resize-none bg-white" />
+      <textarea ref={textareaRef} {...props} onKeyDown={handleKeyDown} onPaste={handlePaste} className="w-full px-3 py-2 pb-8 border border-gray-200 rounded-md text-sm text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/50 transition-shadow resize-none bg-white" />
       <div className="absolute bottom-1.5 left-2 flex items-center gap-1">
         <button type="button" onClick={insertBold} className="px-2 py-0.5 text-[10px] font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"><strong>B</strong> 加粗</button>
         <span className="text-gray-300 mx-0.5">|</span>
