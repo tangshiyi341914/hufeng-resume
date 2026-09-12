@@ -152,7 +152,7 @@ function FieldColorGroup({ title, fields, value, onChange }: {
   onChange: (key: keyof FieldColors, v: TextColorLevel) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const colorLevels: TextColorLevel[] = ['gray-300', 'gray-400', 'gray-500', 'gray-600', 'gray-700', 'gray-800', 'gray-900'];
+  const colorLevels: TextColorLevel[] = ['gray-300', 'gray-400', 'gray-500', 'gray-600', 'gray-700', 'gray-800', 'gray-900', 'blue-600'];
 
   return (
     <div className="border border-gray-150 rounded-lg overflow-hidden">

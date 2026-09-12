@@ -29,6 +29,7 @@ export interface Internship {
   position: string;
   startDate: string;
   endDate: string;
+  current: boolean;
   description: string;
 }
 
@@ -92,7 +93,7 @@ export interface ResumeData {
 export type TemplateType = 'classic' | 'modern' | 'minimal';
 
 // 文字颜色等级（从浅灰到深黑）
-export type TextColorLevel = 'gray-300' | 'gray-400' | 'gray-500' | 'gray-600' | 'gray-700' | 'gray-800' | 'gray-900';
+export type TextColorLevel = 'gray-300' | 'gray-400' | 'gray-500' | 'gray-600' | 'gray-700' | 'gray-800' | 'gray-900' | 'blue-600';
 
 export const textColorMap: Record<TextColorLevel, string> = {
   'gray-300': '#d1d5db',
@@ -102,6 +103,7 @@ export const textColorMap: Record<TextColorLevel, string> = {
   'gray-700': '#374151',
   'gray-800': '#1f2937',
   'gray-900': '#111827',
+  'blue-600': '#2563eb',
 };
 
 export const textColorLabels: Record<TextColorLevel, string> = {
@@ -112,6 +114,7 @@ export const textColorLabels: Record<TextColorLevel, string> = {
   'gray-700': '浅黑',
   'gray-800': '中黑',
   'gray-900': '深黑',
+  'blue-600': '蓝色',
 };
 
 // 每个模块各字段的颜色配置
@@ -164,30 +167,30 @@ export const defaultFieldColors: FieldColors = {
   basicMeta: 'gray-600',
   basicContact: 'gray-600',
   basicSummary: 'gray-600',
-  workCompany: 'gray-800',
-  workPosition: 'gray-800',
-  workDate: 'gray-400',
+  workCompany: 'blue-600',
+  workPosition: 'blue-600',
+  workDate: 'blue-600',
   workDesc: 'gray-600',
-  internCompany: 'gray-700',
-  internPosition: 'gray-700',
-  internDate: 'gray-900',
+  internCompany: 'blue-600',
+  internPosition: 'blue-600',
+  internDate: 'blue-600',
   internDesc: 'gray-900',
   eduSchool: 'gray-800',
   eduDetail: 'gray-800',
   eduDate: 'gray-800',
-  skillName: 'gray-700',
-  skillLevel: 'gray-300',
+  skillName: 'blue-600',
+  skillLevel: 'blue-600',
   skillDesc: 'gray-600',
   researchDesc: 'gray-600',
-  projName: 'gray-800',
-  projLink: 'gray-400',
-  projTech: 'gray-400',
+  projName: 'blue-600',
+  projLink: 'blue-600',
+  projTech: 'blue-600',
   projDesc: 'gray-600',
-  langName: 'gray-600',
-  langProf: 'gray-400',
-  certName: 'gray-600',
-  certIssuer: 'gray-400',
-  certDate: 'gray-400',
+  langName: 'blue-600',
+  langProf: 'blue-600',
+  certName: 'blue-600',
+  certIssuer: 'blue-600',
+  certDate: 'blue-600',
   sectionTitle: 'gray-600',
 };
 

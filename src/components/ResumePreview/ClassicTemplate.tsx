@@ -119,7 +119,7 @@ function InternshipSection({ data: items, C, accentColor, fc }: { data: Internsh
               {intern.company && <span className="font-bold" style={{ color: colorFor(fc.internCompany) }}>{intern.company}</span>}
               {intern.position && <span className="font-bold" style={{ color: colorFor(fc.internPosition), marginLeft: intern.company ? '2em' : '0' }}>{intern.position}</span>}
             </div>
-            <span style={{ color: colorFor(fc.internDate), fontSize: `calc(${C.bodySize} - 2px)` }}>{fmtDate(intern.startDate)} — {fmtDate(intern.endDate)}</span>
+            <span style={{ color: colorFor(fc.internDate), fontSize: `calc(${C.bodySize} - 2px)` }}>{fmtDate(intern.startDate)} — {intern.current ? '至今' : fmtDate(intern.endDate)}</span>
           </div>
           {intern.description && <div style={{ color: colorFor(fc.internDesc) }}>{renderRichText(intern.description)}</div>}
         </div>

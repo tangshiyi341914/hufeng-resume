@@ -388,7 +388,14 @@ function InternshipForm() {
                 <Field label="公司名称"><Input value={intern.company} onChange={(e) => updateInternship(intern.id, { company: e.target.value })} placeholder="公司名称" /></Field>
                 <Field label="实习职位"><Input value={intern.position} onChange={(e) => updateInternship(intern.id, { position: e.target.value })} placeholder="实习职位" /></Field>
                 <Field label="开始日期"><DatePicker value={intern.startDate} onChange={(v) => updateInternship(intern.id, { startDate: v })} /></Field>
-                <Field label="结束日期"><DatePicker value={intern.endDate} onChange={(v) => updateInternship(intern.id, { endDate: v })} /></Field>
+                <Field label="结束日期">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1"><DatePicker value={intern.current ? '' : intern.endDate} onChange={(v) => updateInternship(intern.id, { endDate: v })} /></div>
+                    <label className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap cursor-pointer">
+                      <input type="checkbox" checked={intern.current} onChange={(e) => updateInternship(intern.id, { current: e.target.checked, endDate: e.target.checked ? '' : intern.endDate })} className="accent-primary" /> 至今
+                    </label>
+                  </div>
+                </Field>
                 <Field label="实习描述" span><BoldTextarea value={intern.description} onChange={(e) => updateInternship(intern.id, { description: e.target.value })} placeholder="描述实习期间的工作内容和收获..." rows={6} /></Field>
               </div>
             </ListItemCard>

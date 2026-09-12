@@ -139,7 +139,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
         data: {
           ...s.currentResume.data,
           internships: [...s.currentResume.data.internships,
-            { id: uuidv4(), company: '', position: '', startDate: '', endDate: '', description: '' }],
+            { id: uuidv4(), company: '', position: '', startDate: '', endDate: '', current: false, description: '' }],
         },
       },
       dirty: true,
@@ -405,6 +405,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       // 迁移旧数据 — 补充缺失字段
       data: {
         ...resume.data,
+        internships: (resume.data.internships || []).map((i) => ({ current: false, ...i })),
         skills: (resume.data.skills || []).map((s) => ({ description: '', ...s })),
         research: (resume.data.research || []).map((r) => ({ description: '', ...r })),
       },
