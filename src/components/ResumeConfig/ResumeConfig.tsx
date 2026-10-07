@@ -44,7 +44,8 @@ export default function ResumeConfigPanel({ open, onClose }: Props) {
   const { config, template, sectionOrder } = currentResume;
   if (!open) return null;
 
-  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  // 只挡住负值（负 px / 负字号在 CSS 里无意义），下限交给用户自己把控
+  const clamp = (v: number, max: number) => Math.min(max, Math.max(0, v));
 
   const updateFieldColor = (key: keyof FieldColors, value: TextColorLevel) => {
     updateConfig({ fieldColors: { ...config.fieldColors, [key]: value } });
@@ -90,22 +91,22 @@ export default function ResumeConfigPanel({ open, onClose }: Props) {
             </div>
           </div>
 
-          <NumberSetting icon={<Type size={15} />} label="姓名字号 (px)" value={config.nameSize} min={16} max={48} step={1}
-            onChange={(v) => updateConfig({ nameSize: clamp(v, 16, 48) })} />
-          <NumberSetting icon={<Type size={15} />} label="模块标题字号 (px)" value={config.sectionTitleSize} min={8} max={24} step={1}
-            onChange={(v) => updateConfig({ sectionTitleSize: clamp(v, 8, 24) })} />
-          <NumberSetting icon={<Type size={15} />} label="正文字号 (px)" value={config.bodySize} min={8} max={24} step={1}
-            onChange={(v) => updateConfig({ bodySize: clamp(v, 8, 24) })} />
-          <NumberSetting icon={<AlignJustify size={15} />} label="行高" value={config.lineHeight} min={1.0} max={3.0} step={0.1}
-            onChange={(v) => updateConfig({ lineHeight: clamp(v, 1.0, 3.0) })} />
-          <NumberSetting icon={<MoveVertical size={15} />} label="模块间距 (px)" value={config.sectionSpacing} min={2} max={80} step={2}
-            onChange={(v) => updateConfig({ sectionSpacing: clamp(v, 2, 80) })} />
-          <NumberSetting icon={<MoveVertical size={15} />} label="项间距 (px)" value={config.itemSpacing} min={2} max={48} step={2}
-            onChange={(v) => updateConfig({ itemSpacing: clamp(v, 2, 48) })} />
-          <NumberSetting icon={<Maximize size={15} />} label="左右页边距 (px)" value={config.pageMarginX} min={12} max={72} step={2}
-            onChange={(v) => updateConfig({ pageMarginX: clamp(v, 12, 72) })} />
-          <NumberSetting icon={<Maximize size={15} />} label="上下页边距 (px)" value={config.pageMarginY} min={12} max={72} step={2}
-            onChange={(v) => updateConfig({ pageMarginY: clamp(v, 12, 72) })} />
+          <NumberSetting icon={<Type size={15} />} label="姓名字号 (px)" value={config.nameSize} max={48} step={1}
+            onChange={(v) => updateConfig({ nameSize: clamp(v, 48) })} />
+          <NumberSetting icon={<Type size={15} />} label="模块标题字号 (px)" value={config.sectionTitleSize} max={24} step={1}
+            onChange={(v) => updateConfig({ sectionTitleSize: clamp(v, 24) })} />
+          <NumberSetting icon={<Type size={15} />} label="正文字号 (px)" value={config.bodySize} max={24} step={1}
+            onChange={(v) => updateConfig({ bodySize: clamp(v, 24) })} />
+          <NumberSetting icon={<AlignJustify size={15} />} label="行高" value={config.lineHeight} max={3.0} step={0.1}
+            onChange={(v) => updateConfig({ lineHeight: clamp(v, 3.0) })} />
+          <NumberSetting icon={<MoveVertical size={15} />} label="模块间距 (px)" value={config.sectionSpacing} max={80} step={2}
+            onChange={(v) => updateConfig({ sectionSpacing: clamp(v, 80) })} />
+          <NumberSetting icon={<MoveVertical size={15} />} label="项间距 (px)" value={config.itemSpacing} max={48} step={2}
+            onChange={(v) => updateConfig({ itemSpacing: clamp(v, 48) })} />
+          <NumberSetting icon={<Maximize size={15} />} label="左右页边距 (px)" value={config.pageMarginX} max={72} step={2}
+            onChange={(v) => updateConfig({ pageMarginX: clamp(v, 72) })} />
+          <NumberSetting icon={<Maximize size={15} />} label="上下页边距 (px)" value={config.pageMarginY} max={72} step={2}
+            onChange={(v) => updateConfig({ pageMarginY: clamp(v, 72) })} />
 
           {/* ===== 文字颜色 ===== */}
           <SectionHeader icon={<Palette size={15} />} title="文字颜色" />
@@ -188,16 +189,16 @@ function FieldColorGroup({ title, fields, value, onChange }: {
   );
 }
 
-function NumberSetting({ icon, label, value, min, max, step, onChange }: {
-  icon: React.ReactNode; label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void;
+function NumberSetting({ icon, label, value, max, step, onChange }: {
+  icon: React.ReactNode; label: string; value: number; max: number; step: number; onChange: (v: number) => void;
 }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2 text-gray-500">{icon}<span className="text-xs font-semibold uppercase tracking-wider">{label}</span></div>
       <div className="flex items-center gap-2">
-        <button onClick={() => onChange(value - step)} disabled={value <= min}
+        <button onClick={() => onChange(value - step)} disabled={value <= 0}
           className="w-8 h-8 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><Minus size={14} /></button>
-        <input type="number" value={step < 1 ? value.toFixed(1) : value} min={min} max={max} step={step}
+        <input type="number" value={step < 1 ? value.toFixed(1) : value} min={0} max={max} step={step}
           onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }}
           className="w-20 text-center text-sm font-medium border border-gray-200 rounded-md py-2 outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/50 text-gray-700" />
         <button onClick={() => onChange(value + step)} disabled={value >= max}

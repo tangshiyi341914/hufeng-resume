@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../store/resumeStore';
 import { exportToPDF } from '../utils/exportPdf';
@@ -7,16 +7,44 @@ import ResumePreview from '../components/ResumePreview/ResumePreview';
 import ResumeConfigPanel from '../components/ResumeConfig/ResumeConfig';
 import { ArrowLeft, Download, Save, Eye, Edit3, Loader2, Check, Settings } from 'lucide-react';
 
+// 停笔多久后自动保存（防抖）：每次编辑都会重新计时
+const AUTO_SAVE_DELAY_MS = 5000;
+
 export default function EditorPage() {
   const navigate = useNavigate();
   const { currentResume, setTitle, saveResume, saving, dirty } = useResumeStore();
   const [showPreview, setShowPreview] = useState(true);
   const [msg, setMsg] = useState('');
   const [configOpen, setConfigOpen] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState('');
+  const [autoSaveFailed, setAutoSaveFailed] = useState(false);
+
+  const timeLabel = () => new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+  // 自动保存：dirty 后停笔 5 秒触发；每次编辑（currentResume 变化）都会重置计时器。
+  // saving 期间不重开计时器，避免并发保存互相覆盖。
+  useEffect(() => {
+    if (!dirty || saving) return;
+    const timer = setTimeout(async () => {
+      const result = await saveResume();
+      setLastSavedAt(result ? timeLabel() : '');
+      setAutoSaveFailed(!result);
+    }, AUTO_SAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [dirty, saving, currentResume, saveResume]);
+
+  // 离开编辑器（返回/切换页面）时立刻补一次保存，避免最后一笔修改还在 5 秒防抖窗口里就被丢掉。
+  // 直接读 store 快照，避免闭包拿到过期的 dirty/saving。
+  useEffect(() => () => {
+    const { dirty, saving, saveResume: save } = useResumeStore.getState();
+    if (dirty && !saving) void save();
+  }, []);
 
   const handleSave = async () => {
     const result = await saveResume();
     if (result) {
+      setLastSavedAt(timeLabel());
+      setAutoSaveFailed(false);
       setMsg('保存成功');
       setTimeout(() => setMsg(''), 2000);
     } else {
@@ -54,7 +82,21 @@ export default function EditorPage() {
               <Settings size={14} />
               配置
             </button>
-            {dirty && <span className="w-1.5 h-1.5 rounded-full bg-primary-light" title="未保存" />}
+            {saving ? (
+              <span className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap">
+                <Loader2 size={12} className="animate-spin" />
+                保存中
+              </span>
+            ) : dirty ? (
+              <span className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap" title={`修改后 ${AUTO_SAVE_DELAY_MS / 1000} 秒自动保存`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-light" />
+                未保存
+              </span>
+            ) : autoSaveFailed ? (
+              <span className="text-xs text-red-500 whitespace-nowrap" title="自动保存失败，请检查后端服务是否正常">自动保存失败</span>
+            ) : lastSavedAt ? (
+              <span className="text-xs text-gray-400 whitespace-nowrap">已保存 {lastSavedAt}</span>
+            ) : null}
           </div>
         </div>
 

@@ -420,11 +420,26 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
     }),
 
   saveResume: async () => {
+    // 快照：保存期间用户可能继续编辑，用它判断回来后本地是否已有更新的内容
+    const snapshot = get().currentResume;
     set({ saving: true });
     try {
-      const r = get().currentResume;
-      const saved = r.id ? await api.updateResume(r.id, r) : await api.createResume(r);
-      set({ currentResume: { ...saved, sectionOrder: saved.sectionOrder || [...defaultSectionOrder] }, dirty: false, saving: false });
+      const saved = snapshot.id ? await api.updateResume(snapshot.id, snapshot) : await api.createResume(snapshot);
+      if (get().currentResume === snapshot) {
+        // 保存期间没有新的编辑：直接采用服务端返回的数据
+        set({ currentResume: { ...saved, sectionOrder: saved.sectionOrder || [...defaultSectionOrder] }, dirty: false, saving: false });
+      } else {
+        // 保存期间用户又改了内容：保留本地最新编辑（避免被旧快照覆盖），
+        // 只把服务端生成的 id 并入（新建时必需，否则下次保存会重复创建），dirty 保持 true 等下一轮自动保存
+        set((s) => ({
+          currentResume: {
+            ...s.currentResume,
+            id: saved.id ?? s.currentResume.id,
+            createdAt: s.currentResume.createdAt ?? saved.createdAt,
+          },
+          saving: false,
+        }));
+      }
       return saved;
     } catch (e) {
       console.error('保存失败:', e);

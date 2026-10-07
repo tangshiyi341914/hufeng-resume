@@ -6,6 +6,7 @@ dist/
 
 # Sensitive data — contains personal resumes, do not commit
 data.json
+data.json.bak
 
 # Personal photo — local avatar, do not commit
 public/photo.jpg
